@@ -8,6 +8,12 @@ Abnormal prediction with its probability.
 > Research and educational use only. This project is not a medical device and
 > must not be used to diagnose a patient or recommend treatment.
 
+## Demo Video
+
+[![Watch the KneeSight AI demo](https://img.youtube.com/vi/jDOCO06NwwA/maxresdefault.jpg)](https://youtu.be/jDOCO06NwwA)
+
+[Watch the full KneeSight AI deployment demo on YouTube](https://youtu.be/jDOCO06NwwA).
+
 ## Result
 
 | Model | Input strategy | Independent test ROC-AUC |
