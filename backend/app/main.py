@@ -1,6 +1,3 @@
-from io import BytesIO
-
-import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -11,6 +8,11 @@ from app.config import (
     MAX_UPLOAD_BYTES,
     MODEL_VERSION,
     THRESHOLD_SOURCE,
+)
+from app.services.ingestion import (
+    ScanIngestionError,
+    ingest_scan,
+    supported_filename,
 )
 from app.services.inference import ScanValidationError, inference_service
 
@@ -44,6 +46,10 @@ class PredictionResponse(BaseModel):
     probability: float
     threshold: float
     model_version: str
+    source_format: str
+    original_shape: tuple[int, int, int]
+    processed_shape: tuple[int, int, int]
+    preprocessing_warnings: tuple[str, ...]
     disclaimer: str
 
 
@@ -62,23 +68,29 @@ def health() -> HealthResponse:
 
 @app.post("/api/predict", response_model=PredictionResponse)
 async def predict(scan: UploadFile = File(...)) -> PredictionResponse:
-    if not scan.filename or not scan.filename.lower().endswith(".npy"):
+    if not scan.filename or not supported_filename(scan.filename):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Only .npy MRI volumes are supported in this version.",
+            detail=(
+                "Supported formats are .npy, .nii, .nii.gz, and a .zip "
+                "containing one DICOM MRI series."
+            ),
         )
 
     payload = await scan.read(MAX_UPLOAD_BYTES + 1)
     if len(payload) > MAX_UPLOAD_BYTES:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="The uploaded volume exceeds the 16 MB limit.",
+            detail=(
+                f"The uploaded scan exceeds the "
+                f"{MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit."
+            ),
         )
 
     try:
-        volume = np.load(BytesIO(payload), allow_pickle=False)
-        result = inference_service.predict(volume)
-    except (ValueError, OSError, EOFError, ScanValidationError) as exc:
+        ingested = ingest_scan(scan.filename, payload)
+        result = inference_service.predict(ingested.volume)
+    except (ScanIngestionError, ScanValidationError) as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
@@ -94,6 +106,10 @@ async def predict(scan: UploadFile = File(...)) -> PredictionResponse:
         probability=result.probability,
         threshold=result.threshold,
         model_version=result.model_version,
+        source_format=ingested.source_format,
+        original_shape=ingested.original_shape,
+        processed_shape=EXPECTED_SHAPE,
+        preprocessing_warnings=ingested.warnings,
         disclaimer=(
             "Probability refers to the abnormal class. Research use only; "
             "this output is not a medical diagnosis."

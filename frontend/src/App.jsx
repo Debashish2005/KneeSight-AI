@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 
-const acceptedExtensions = [".npy"];
+const acceptedExtensions = [".npy", ".nii", ".nii.gz", ".zip"];
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
 const apiUrl = (path) => `${apiBaseUrl}${path}`;
@@ -69,11 +69,13 @@ function App() {
 
   const chooseFile = (file) => {
     if (!file) return;
-    const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-    if (!acceptedExtensions.includes(extension)) {
+    const filename = file.name.toLowerCase();
+    if (!acceptedExtensions.some((extension) => filename.endsWith(extension))) {
       setSelectedFile(null);
       setStatus("error");
-      setMessage("Please select a NumPy MRI volume (.npy).");
+      setMessage(
+        "Select a .npy, .nii, .nii.gz, or ZIP containing a DICOM series.",
+      );
       return;
     }
     setSelectedFile(file);
@@ -115,6 +117,10 @@ function App() {
           ? abnormalProbability
           : 1 - abnormalProbability,
         threshold: data.threshold,
+        sourceFormat: data.source_format,
+        originalShape: data.original_shape,
+        processedShape: data.processed_shape,
+        preprocessingWarnings: data.preprocessing_warnings || [],
       });
       setStatus("success");
       setMessage(
@@ -204,8 +210,8 @@ function App() {
             <span className="kicker">MRI analysis workspace</span>
             <h2>Upload a knee MRI volume</h2>
             <p>
-              The current research pipeline accepts a preprocessed 3D NumPy
-              volume. Clinical DICOM and NIfTI ingestion will be added next.
+              Upload a preprocessed NumPy volume, NIfTI scan, or zipped DICOM
+              series. Raw scans are converted in memory to the model geometry.
             </p>
           </div>
 
@@ -240,7 +246,7 @@ function App() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".npy"
+                  accept=".npy,.nii,.nii.gz,.zip"
                   onChange={(event) => chooseFile(event.target.files[0])}
                   hidden
                 />
@@ -256,7 +262,7 @@ function App() {
                     <span>or click to browse your device</span>
                   </>
                 )}
-                <small>Supported now: .NPY | Expected shape: 128 x 128 x 64</small>
+                <small>.NPY, .NII, .NII.GZ, or zipped DICOM | 3D DESS knee MRI</small>
               </div>
 
               {message && (
@@ -278,8 +284,8 @@ function App() {
                 )}
               </button>
               <p className="privacy-note">
-                <ShieldCheck size={14} /> Files are processed for this session and are not
-                intended to be retained.
+                <ShieldCheck size={14} /> Files are processed temporarily and are not
+                retained by the app.
               </p>
             </div>
 
@@ -317,7 +323,9 @@ function App() {
                 </div>
               )}
               <div className="preview-result">
-                <span>Screening output</span>
+                <span>
+                  Screening output{result ? ` | ${result.sourceFormat}` : ""}
+                </span>
                 <strong>
                   {result
                     ? `${result.prediction} pattern predicted`
@@ -347,6 +355,15 @@ function App() {
                   </div>
                 </div>
               )}
+              {result?.preprocessingWarnings.length > 0 && (
+                <div className="conversion-note">
+                  <CircleAlert size={18} />
+                  <p>
+                    <strong>Experimental raw-scan conversion</strong>
+                    {result.preprocessingWarnings[0]}
+                  </p>
+                </div>
+              )}
               <div className="review-note">
                 <HeartPulse size={20} />
                 <p>
@@ -368,7 +385,7 @@ function App() {
               number="01"
               icon={<UploadCloud />}
               title="Upload volume"
-              text="Provide a de-identified, preprocessed 3D knee MRI array."
+              text="Provide a de-identified 3D DESS knee MRI as NIfTI, DICOM ZIP, or NumPy."
             />
             <ProcessCard
               number="02"
@@ -453,7 +470,7 @@ function App() {
             />
             <Faq
               question="What scan format can I upload?"
-              answer="The first version accepts de-identified NumPy arrays with the same 128 x 128 x 64 structure used during model development. DICOM and NIfTI support are planned."
+              answer="You can upload .npy, .nii, .nii.gz, or a ZIP containing one DICOM MRI series. DICOM metadata must identify a 3D DESS sequence. Raw-format conversion is experimental because the reported model was evaluated on prepared OAI volumes."
             />
             <Faq
               question="How was the model evaluated?"

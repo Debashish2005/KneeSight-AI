@@ -4,4 +4,5 @@ python-multipart==0.0.20
 numpy==2.2.1
 pydantic==2.10.4
 python-dotenv==1.2.2
+SimpleITK==2.5.5
 torch==2.6.0

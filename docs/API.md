@@ -65,6 +65,12 @@ Example response:
   "probability": 0.061,
   "threshold": 0.5,
   "model_version": "medicalnet-resnet18-top50-v1",
+  "source_format": "NIfTI",
+  "original_shape": [160, 384, 384],
+  "processed_shape": [128, 128, 64],
+  "preprocessing_warnings": [
+    "NIfTI does not reliably identify the MRI sequence. Only sagittal 3D DESS knee MRI should be used with this model."
+  ],
   "disclaimer": "Probability refers to the abnormal class. Research use only; this output is not a medical diagnosis."
 }
 ```
@@ -72,13 +78,16 @@ Example response:
 `probability` always refers to the Abnormal class, even when the returned
 prediction is Normal.
 
+Supported files are `.npy`, `.nii`, `.nii.gz`, and `.zip`. A ZIP must contain
+one readable DICOM MRI series. See [Input Formats](INPUT_FORMATS.md).
+
 ## Error Responses
 
 | Status | Meaning |
 | --- | --- |
 | `413` | File exceeds the configured upload limit |
-| `415` | File is not a `.npy` volume |
-| `422` | Invalid NumPy file, wrong shape, or invalid values |
+| `415` | Unsupported file extension |
+| `422` | Invalid volume, unsafe ZIP, incompatible sequence, or invalid values |
 | `503` | Model checkpoint is missing or could not be loaded |
 
 ## PUT and DELETE

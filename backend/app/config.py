@@ -30,7 +30,11 @@ MODEL_SHA256 = os.getenv("MODEL_SHA256", "").strip().lower()
 
 EXPECTED_SHAPE = (128, 128, 64)
 TOP_K_SLICES = 50
-MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(16 * 1024 * 1024)))
+MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(256 * 1024 * 1024)))
+MAX_EXTRACTED_BYTES = int(
+    os.getenv("MAX_EXTRACTED_BYTES", str(512 * 1024 * 1024))
+)
+MAX_DICOM_FILES = int(os.getenv("MAX_DICOM_FILES", "4096"))
 MODEL_VERSION = os.getenv("MODEL_VERSION", "medicalnet-resnet18-top50-v1")
 
 # Replace the default with BEST_THRESHOLD_I3D from validation. ROC-AUC is
@@ -43,3 +47,8 @@ CORS_ORIGINS = _csv_from_env(
     "CORS_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173",
 )
+REQUIRE_DESS_DICOM = os.getenv("REQUIRE_DESS_DICOM", "true").lower() not in {
+    "0",
+    "false",
+    "no",
+}

@@ -25,7 +25,9 @@ exported from the final notebook.
 - Responsive React and Vite healthcare interface
 - Animated Normal/Abnormal probability visualization
 - FastAPI inference and health endpoints
-- Strict `.npy`, numeric-data, finite-value, and shape validation
+- `.npy`, NIfTI, and zipped DICOM ingestion
+- Physical orientation standardization and 3D resampling with SimpleITK
+- DICOM archive safety, MR modality, and DESS sequence checks
 - Pretrained 3D MedicalNet ResNet-18 with strict checkpoint loading
 - Training-consistent Top-50 slice selection and per-volume normalization
 - Environment-based frontend URL, CORS, model path, and threshold settings
@@ -50,7 +52,8 @@ Prediction, abnormal-class probability, threshold, model metadata
 ```
 
 See [Architecture](docs/ARCHITECTURE.md), [API](docs/API.md), and
-[Deployment](docs/DEPLOYMENT.md) for the full walkthrough.
+[Deployment](docs/DEPLOYMENT.md) for the full walkthrough. Read
+[Input Formats](docs/INPUT_FORMATS.md) before testing raw scans.
 
 ## Project Structure
 
@@ -130,15 +133,22 @@ npm run build
 
 ## Input Contract
 
-The current version accepts one de-identified NumPy array:
+The current version accepts one de-identified scan:
 
-- File type: `.npy`
-- Shape: `(128, 128, 64)`
+- `.npy`: prepared array with exact shape `(128, 128, 64)`
+- `.nii` or `.nii.gz`: one 3D NIfTI knee MRI volume
+- `.zip`: one DICOM MRI series; metadata must identify 3D DESS
 - Values: finite numeric MRI intensities
-- Maximum upload: 16 MB by default
+- Maximum upload: 256 MB by default
 
-DICOM and NIfTI ingestion are not implemented yet. Uploaded files are
-processed in memory and are not deliberately persisted by the API.
+NIfTI and DICOM volumes are reoriented to LPS coordinates and resampled to the
+model geometry. Uploaded files are processed in memory or a temporary
+directory and are not deliberately persisted by the API.
+
+The reported `0.8251` test ROC-AUC applies to prepared OAI arrays, not arbitrary
+raw NIfTI or DICOM scans. Raw conversion is therefore marked experimental in
+the API and interface. Different scanner protocols, fields of view, sequences,
+and populations can substantially change model behavior.
 
 ## Model Weights and Data
 

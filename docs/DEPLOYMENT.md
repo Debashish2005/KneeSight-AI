@@ -23,6 +23,9 @@ memory and cold-start limits before selecting a hosting plan.
 | `THRESHOLD_SOURCE` | Human-readable threshold provenance |
 | `CORS_ORIGINS` | Comma-separated frontend origins |
 | `MAX_UPLOAD_BYTES` | Maximum request file size |
+| `MAX_EXTRACTED_BYTES` | Maximum uncompressed DICOM ZIP size |
+| `MAX_DICOM_FILES` | Maximum files accepted in a DICOM ZIP |
+| `REQUIRE_DESS_DICOM` | Reject DICOM series not identified as DESS |
 | `PORT` | Hosted server port |
 
 For a hosted backend, set `MODEL_PATH` to a writable location such as
@@ -61,9 +64,10 @@ CORS_ORIGINS=https://your-frontend.example.com
 5. Deploy the frontend with `VITE_API_BASE_URL`.
 6. Set `CORS_ORIGINS` to the final frontend URL and redeploy the backend.
 7. Test a known valid Normal and Abnormal research volume.
-8. Confirm no uploaded file or response is being logged by the hosting layer.
-9. Keep the research-only disclaimer visible.
-10. Do not upload identifiable patient data.
+8. Test NIfTI and a de-identified DESS DICOM ZIP separately.
+9. Confirm no uploaded file or response is being logged by the hosting layer.
+10. Keep the research-only and experimental-conversion notices visible.
+11. Do not upload identifiable patient data.
 
 ## Production Gaps
 
