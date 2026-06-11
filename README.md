@@ -69,9 +69,21 @@ medical-mri-app/
     public/              Static assets
     src/                 React application and styles
   model_artifacts/       Local checkpoint location; weights are Git-ignored
+  notebooks/             Clean MedicalNet training and evaluation notebook
   docs/                  Architecture, API, and deployment guides
   docker-compose.yml
 ```
+
+## Training Notebook
+
+The cleaned final experiment is available at
+[`notebooks/medicalnet_resnet18_top50_training.ipynb`](notebooks/medicalnet_resnet18_top50_training.ipynb).
+It documents volume-level splitting, Top-50 intensity slice selection,
+augmentation, pretrained MedicalNet fine-tuning, early stopping, threshold
+selection, and independent test evaluation.
+
+Notebook outputs are cleared to keep the repository lightweight. The final
+recorded independent test ROC-AUC was **0.8251**.
 
 ## Local Setup
 
