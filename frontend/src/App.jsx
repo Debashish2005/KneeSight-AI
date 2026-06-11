@@ -23,6 +23,38 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
 const apiUrl = (path) => `${apiBaseUrl}${path}`;
 
+function getFollowUpGuidance(result) {
+  if (!result) return null;
+
+  const distanceFromThreshold = Math.abs(
+    result.abnormalProbability - result.threshold,
+  );
+  if (distanceFromThreshold < 0.1) {
+    return {
+      label: "Near the model threshold",
+      title: "Clinical review is recommended",
+      text: "The result is close to the model's decision boundary. Treat it as uncertain and review the original MRI with a radiologist or referring clinician.",
+      tone: "uncertain",
+    };
+  }
+
+  if (result.prediction === "Abnormal") {
+    return {
+      label: "Higher abnormal-pattern signal",
+      title: "Arrange a professional review",
+      text: "Ask a radiologist to interpret the original MRI. For ongoing pain, swelling, instability, injury, or limited movement, consult an orthopedic or sports-medicine specialist.",
+      tone: "review",
+    };
+  }
+
+  return {
+    label: "Lower abnormal-pattern signal",
+    title: "Do not treat this as an all-clear",
+    text: "Review the official radiology report. If symptoms persist, worsen, or affect walking or movement, consult your primary clinician or an orthopedic specialist despite this result.",
+    tone: "routine",
+  };
+}
+
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -33,6 +65,7 @@ function App() {
   const [animatedPercent, setAnimatedPercent] = useState(0);
   const [modelReady, setModelReady] = useState(null);
   const fileInputRef = useRef(null);
+  const followUpGuidance = getFollowUpGuidance(result);
 
   useEffect(() => {
     fetch(apiUrl("/api/health"))
@@ -373,6 +406,63 @@ function App() {
               </div>
             </div>
           </div>
+
+          {result && (
+            <section className={`next-steps-card ${followUpGuidance.tone}`}>
+              <div className="next-steps-intro">
+                <span className="kicker">Recommended next steps</span>
+                <span className="guidance-label">{followUpGuidance.label}</span>
+                <h3>{followUpGuidance.title}</h3>
+                <p>{followUpGuidance.text}</p>
+              </div>
+
+              <div className="next-steps-grid">
+                <article>
+                  <FileScan size={21} />
+                  <div>
+                    <strong>Get the official interpretation</strong>
+                    <p>Bring the original MRI and radiology report to your clinician.</p>
+                  </div>
+                </article>
+                <article>
+                  <HeartPulse size={21} />
+                  <div>
+                    <strong>Choose the appropriate clinician</strong>
+                    <p>
+                      Start with the referring doctor or radiologist; consider
+                      orthopedics or sports medicine for knee symptoms.
+                    </p>
+                  </div>
+                </article>
+                <article className="urgent-step">
+                  <CircleAlert size={21} />
+                  <div>
+                    <strong>Seek urgent medical care when needed</strong>
+                    <p>
+                      Severe pain after injury, inability to bear weight,
+                      deformity, numbness, or a hot swollen joint with fever
+                      require prompt assessment.
+                    </p>
+                  </div>
+                </article>
+                <article>
+                  <ShieldCheck size={21} />
+                  <div>
+                    <strong>No medication advice</strong>
+                    <p>
+                      Do not start, stop, or change medication based on this
+                      research result.
+                    </p>
+                  </div>
+                </article>
+              </div>
+
+              <p className="guidance-disclaimer">
+                The percentage is model output, not disease severity. Symptoms
+                and a clinician's interpretation take priority over this result.
+              </p>
+            </section>
+          )}
         </section>
 
         <section className="process-section" id="how-it-works">

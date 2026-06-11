@@ -24,6 +24,7 @@ exported from the final notebook.
 
 - Responsive React and Vite healthcare interface
 - Animated Normal/Abnormal probability visualization
+- Result-aware, non-prescriptive follow-up guidance
 - FastAPI inference and health endpoints
 - `.npy`, NIfTI, and zipped DICOM ingestion
 - Physical orientation standardization and 3D resampling with SimpleITK
@@ -53,7 +54,8 @@ Prediction, abnormal-class probability, threshold, model metadata
 
 See [Architecture](docs/ARCHITECTURE.md), [API](docs/API.md), and
 [Deployment](docs/DEPLOYMENT.md) for the full walkthrough. Read
-[Input Formats](docs/INPUT_FORMATS.md) before testing raw scans.
+[Input Formats](docs/INPUT_FORMATS.md) before testing raw scans and
+[Safety](docs/SAFETY.md) before changing the result guidance.
 
 ## Project Structure
 
